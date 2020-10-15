@@ -1,0 +1,62 @@
+# =============== #
+# Unity generated #
+# =============== #
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild
+**/[Ll]ibrary/
+**/sysinfo.txt
+**/Assets/AssetStoreTools*
+**/[Ll]ogs/
+**/.[Gg]radle
+
+
+# =========== #
+# Build File #
+# =========== #
+**/*.apk
+**/*.unitypackage
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+**/*.userprefs
+**/[Ee]xported[Oo]bj/
+**/*.csproj
+**/*.unityproj
+**/*.sln
+**/*.suo
+**/*.tmp
+**/*.user
+**/*.pidb
+**/*.booproj
+**/*.svd
+**/VSCode
+**/VSCode.meta
+
+# ========================================== #
+# Other stuff to be excluded from repository #
+# ========================================== #
+**/Assets/StreamingAssets/AssetBundles*
+**/Assets/StreamingAssets/Bundles*
+**/AssetBundles
+**/Builds
+**/Thumbs.db
+**/Thumbs.db.meta
+**/StreamingAssets/build_info.txt
+
+*.blend[0-9]
+
+# ================= #
+# Text editor files #
+# ================= #
+**/*~
+**/.vscode/
+.idea/
+**/__pycache__/
+**JetBrains.Rider*
+
+# =========== #
+# MacOS files #
+# =========== #
+.DS_Store
