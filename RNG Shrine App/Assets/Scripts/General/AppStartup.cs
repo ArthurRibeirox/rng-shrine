@@ -1,19 +1,20 @@
-using GameSignals;
-using RNG;
 using ServiceLocator;
+using UnityBluetooth;
 using UnityEngine;
-using UnityEngine.Android;
 
 namespace General
 {
     public class AppStartup : MonoBehaviour
     {
         [SerializeField]
-        private UnitySerialPort unitySerialPort;
+        private BluetoothController bluetoothController;
 
         private void Awake()
         {
-            GameServices.RegisterService(unitySerialPort);
+            GameServices.RegisterService(bluetoothController);
+
+            DontDestroyOnLoad(gameObject);
+            Destroy(this);
         }
     }
 }
