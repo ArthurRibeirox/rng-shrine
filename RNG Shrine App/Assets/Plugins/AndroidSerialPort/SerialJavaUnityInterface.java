@@ -1,4 +1,4 @@
-package android_serial_port;
+package com.android_serial_port;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.app.Activity;
+import android.util.Log;
 
 import com.unity3d.player.UnityPlayer;
 import java.util.HashMap;
@@ -29,8 +30,9 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
         if(UnityPlayer.currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH))
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        // prevents service destroy on unbind from recreated activity caused by orientation change
-        UnityPlayer.currentActivity.startService(new Intent(UnityPlayer.currentActivity, SerialService.class));
+        Log.e("SerialJavaUnityInterface", "Starting SerialService");
+        UnityPlayer.currentActivity.bindService(new Intent(UnityPlayer.currentActivity, SerialService.class), this, Context.BIND_AUTO_CREATE);
+        UnityPlayer.currentActivity.startService(new Intent(UnityPlayer.currentActivity, com.android_serial_port.SerialService.class));
     }
 
     public void RefreshBluetoothDevices() {
@@ -59,6 +61,8 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
             connectedDevice = GetDeviceByAddress(deviceAddress);
             connected = Connected.Pending;
 
+            Log.d("SerialJavaUnityInterface", "Trying to connect to device: " + connectedDevice.getName());
+
             SerialSocket socket = new SerialSocket(UnityPlayer.currentActivity.getApplicationContext(), connectedDevice);
             service.connect(socket);
         } catch (Exception e) {
@@ -78,6 +82,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder binder) {
+        Log.e("SerialJavaUnityInterface", "onServiceConnected: " + name);
         service = ((SerialService.SerialBinder) binder).getService();
         service.attach(this);
     }
@@ -99,7 +104,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
 
     @Override
     public void onSerialConnectError(Exception e) {
-        System.out.print("connection failed: " + e.getMessage());
+        Log.e("SerialJavaUnityInterface", "onSerialConnectError: " + e.getMessage());
         disconnect();
     }
 
@@ -110,7 +115,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
 
     @Override
     public void onSerialIoError(Exception e) {
-        System.out.print("connection lost: " + e.getMessage());
+        Log.e("SerialJavaUnityInterface", "onSerialIoError: " + e.getMessage());
         disconnect();
     }
 

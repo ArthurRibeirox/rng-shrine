@@ -47,15 +47,19 @@ namespace UnityBluetooth
             BondedDeviceDiscovered?.Invoke(deviceWrapper);
         }
 
-        private void Awake()
+        private void InitJavaInterface()
         {
-            addressToDevice = new Dictionary<string, BluetoothDeviceWrapper>();
-
-            using (AndroidJavaClass javaPlugin = new AndroidJavaClass("android_serial_port.SerialJavaUnityInterface"))
+            using (AndroidJavaClass javaPlugin = new AndroidJavaClass("com.android_serial_port.SerialJavaUnityInterface"))
             {
                 javaInterface = javaPlugin.CallStatic<AndroidJavaObject>("instance");
                 RefreshDevices();
             }
+        }
+
+        private void Awake()
+        {
+            addressToDevice = new Dictionary<string, BluetoothDeviceWrapper>();
+            InitJavaInterface();
         }
     }
 }

@@ -1,4 +1,4 @@
-package android_serial_port;
+package com.android_serial_port;
 
 interface SerialListener {
     void onSerialConnect      ();

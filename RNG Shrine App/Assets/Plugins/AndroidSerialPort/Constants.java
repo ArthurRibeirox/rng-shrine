@@ -1,4 +1,4 @@
-package android_serial_port;
+package com.android_serial_port;
 
 import com.unity3d.player.BuildConfig;
 
