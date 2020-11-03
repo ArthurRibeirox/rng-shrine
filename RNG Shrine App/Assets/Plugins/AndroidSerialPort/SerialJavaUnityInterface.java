@@ -26,6 +26,8 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
     private SerialService service;
     private boolean initialStart = true;
 
+    private String receivedBuffer;
+
     private SerialJavaUnityInterface() {
         if(UnityPlayer.currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH))
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -33,6 +35,8 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
         Log.e("SerialJavaUnityInterface", "Starting SerialService");
         UnityPlayer.currentActivity.bindService(new Intent(UnityPlayer.currentActivity, SerialService.class), this, Context.BIND_AUTO_CREATE);
         UnityPlayer.currentActivity.startService(new Intent(UnityPlayer.currentActivity, com.android_serial_port.SerialService.class));
+
+        receivedBuffer = "";
     }
 
     public void RefreshBluetoothDevices() {
@@ -48,7 +52,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
 
     public void BondedDeviceDiscovered(BluetoothDevice bluetoothDevice)
     {
-        UnityPlayer.UnitySendMessage("SerialController", "OnBondedDeviceDiscovered", bluetoothDevice.getAddress());
+        UnityPlayer.UnitySendMessage("BluetoothController", "OnBondedDeviceDiscovered", bluetoothDevice.getAddress());
         addressToDevice.put(bluetoothDevice.getAddress(), bluetoothDevice);
     }
 
@@ -74,6 +78,48 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
         connected = Connected.False;
         connectedDevice = null;
         service.disconnect();
+
+        UnityPlayer.UnitySendMessage("BluetoothController", "OnBluetoothDeviceDisconnected", "");
+    }
+
+    public void SendData(String str) {
+        if(connected != Connected.True) {
+            Log.e("SerialJavaUnityInterface", "Trying to SendData while not connected to device");
+            return;
+        }
+
+        try {
+            byte[] data = (str + TextUtil.newline).getBytes();
+            service.write(data);
+        } catch (Exception e) {
+            onSerialIoError(e);
+        }
+    }
+
+    private void Receive(byte[] data) {
+        receivedBuffer = receivedBuffer.concat(new String(data));
+
+        boolean endingInNewLine = receivedBuffer.charAt(receivedBuffer.length() - 1) == TextUtil.newlineChar;
+        String[] splitLines = receivedBuffer.split(TextUtil.newline);
+
+        for(int index = 0; index < splitLines.length - 1; index++) {
+            ReportDataReceived(splitLines[index]);
+        }
+
+        if (endingInNewLine)
+        {
+            ReportDataReceived(splitLines[splitLines.length - 1]);
+            receivedBuffer = "";
+        }
+        else
+        {
+            receivedBuffer = splitLines[splitLines.length - 1];
+        }
+    }
+
+    private void ReportDataReceived(String data)
+    {
+        UnityPlayer.UnitySendMessage("BluetoothController", "OnDataReceived", data);
     }
 
     /*
@@ -99,7 +145,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
     @Override
     public void onSerialConnect() {
         connected = Connected.True;
-        UnityPlayer.UnitySendMessage("SerialController", "OnBluetoothDeviceConnected", connectedDevice.getAddress());
+        UnityPlayer.UnitySendMessage("BluetoothController", "OnBluetoothDeviceConnected", connectedDevice.getAddress());
     }
 
     @Override
@@ -110,7 +156,7 @@ public class SerialJavaUnityInterface implements ServiceConnection, SerialListen
 
     @Override
     public void onSerialRead(byte[] data) {
-        // receive(data);
+        Receive(data);
     }
 
     @Override

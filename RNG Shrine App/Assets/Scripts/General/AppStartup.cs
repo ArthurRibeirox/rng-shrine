@@ -1,3 +1,4 @@
+using RNG;
 using ServiceLocator;
 using UnityBluetooth;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace General
         private void Awake()
         {
             GameServices.RegisterService(bluetoothController);
+            GameServices.RegisterService(new SceneController());
 
             DontDestroyOnLoad(gameObject);
             Destroy(this);

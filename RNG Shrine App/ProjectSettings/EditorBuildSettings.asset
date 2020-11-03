@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/BluetoothConnectionScene.unity
     guid: 8fd37d97f9905d742b33a9c775985afd
+  - enabled: 1
+    path: Assets/Scenes/MainScene.unity
+    guid: b684b55f25d1b274186f0693f9ba6ac9
   m_configObjects: {}

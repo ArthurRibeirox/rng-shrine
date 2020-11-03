@@ -11,23 +11,50 @@ SoftwareSerial bluetooth(bluetoothRXPin, bluetoothTXPin);
 
 void SetRGBOperation()
 {
-  bluetooth.read(); // Discard separator '|'
   analogWrite(redPin, bluetooth.parseInt());
-  bluetooth.read(); // Discard separator ','
+  FlushSeparator(',');
   analogWrite(greenPin, bluetooth.parseInt());
-  bluetooth.read(); // Discard separator ','
+  FlushSeparator(',');
   analogWrite(bluePin, bluetooth.parseInt());
+  FlushSeparator('\n');
+}
+
+void GetTargetLedStrip()
+{
+  // TODO
+  bluetooth.parseInt(); // This should be the led id
+  FlushSeparator('|');
+}
+
+void FlushSeparator(char separator)
+{
+  int foundSeparator = bluetooth.read(); // Discard separator '|'
+  if (foundSeparator != separator)
+  {
+    ReportBug(String("Wrong separator! Expected: " + String(separator) + ", got: " + String(foundSeparator)));
+  }
+}
+
+void ReportBug(String message)
+{
+  bluetooth.println("[Error] " + message);
 }
 
 void loop() {
   if (bluetooth.available()) {
+//    ReportBug(bluetooth.readStringUntil('\n'));
+    
     int operationCode = bluetooth.parseInt();
 
-    if(operationCode == 1) {
+    if(operationCode == 0) {
+      FlushSeparator('|');
+      GetTargetLedStrip();
       SetRGBOperation();
     }
   }
 }
+
+
 
 void SetupLED() {
   pinMode(redPin, OUTPUT);
@@ -40,6 +67,7 @@ void SetupLED() {
 }
 
 void SetupBluetooth() {
+  Serial.begin(9600);
   bluetooth.begin(9600);
   bluetooth.print("$");
   bluetooth.print("$");

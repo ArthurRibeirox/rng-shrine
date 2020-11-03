@@ -17,11 +17,6 @@ namespace RNG
 
         private List<BluetoothDeviceEntryGraphics> deviceEntries = new List<BluetoothDeviceEntryGraphics>();
 
-        private void OnBluetoothDeviceConnected(BluetoothDeviceWrapper deviceWrapper)
-        {
-            Debug.Log("Holly molly" + deviceWrapper);
-        }
-
         private void OnBondedDeviceDiscovered(BluetoothDeviceWrapper deviceWrapper)
         {
             var newEntry = Instantiate(bluetoothDeviceEntryPrefab, entryButtonsParent);
@@ -33,13 +28,11 @@ namespace RNG
         {
             bluetoothController = GameServices.GetService<BluetoothController>();
             bluetoothController.BondedDeviceDiscovered += OnBondedDeviceDiscovered;
-            bluetoothController.BluetoothDeviceConnected += OnBluetoothDeviceConnected;
         }
 
         private void OnDestroy()
         {
             bluetoothController.BondedDeviceDiscovered -= OnBondedDeviceDiscovered;
-            bluetoothController.BluetoothDeviceConnected -= OnBluetoothDeviceConnected;
         }
     }
 }
