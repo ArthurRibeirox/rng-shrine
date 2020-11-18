@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 #include "FastLED.h"
 #include "LightController.h"
-#include "LightAnimationStep.h"
+#include "LerpLightAnimationStep.h"
 
 const int bluetoothRXPin = 2;
 const int bluetoothTXPin = 3;
@@ -25,27 +25,27 @@ SoftwareSerial bluetooth(bluetoothRXPin, bluetoothTXPin);
 
 void GetTargetLedStrip()
 {
-  // TODO
-  bluetooth.parseInt(); // This should be the led id
-  FlushSeparator('|');
+    // TODO
+    bluetooth.parseInt(); // This should be the led id
+    FlushSeparator('|');
 }
 
 void FlushSeparator(char separator)
 {
-  int foundSeparator = bluetooth.read();
-  if (foundSeparator != separator)
-  {
-    ReportBug(String("Wrong separator! Expected: " + String(separator) + ", got: " + String(foundSeparator)));
-  }
+    int foundSeparator = bluetooth.read();
+    if (foundSeparator != separator)
+    {
+        ReportBug(String("Wrong separator! Expected: " + String(separator) + ", got: " + String(foundSeparator)));
+    }
 }
 
 void ReportBug(String message)
 {
-  bluetooth.println("[Error] " + message);
+    bluetooth.println("[Error] " + message);
 }
 
 void loop() {
-  lightControllers[0]->Update(millis());
+    lightControllers[0]->Update(millis());
 
 
 
@@ -82,20 +82,22 @@ void loop() {
 }
 
 void SetupBluetooth() {
-  Serial.begin(9600);
-  bluetooth.begin(9600);
-  bluetooth.print("$");
-  bluetooth.print("$");
-  bluetooth.print("$");
-  delay(100);
+    Serial.begin(9600);
+    bluetooth.begin(9600);
+    bluetooth.print("$");
+    bluetooth.print("$");
+    bluetooth.print("$");
+    delay(100);
 }
 
 void setup() {
-  SetupBluetooth();
+    SetupBluetooth();
 
-  pinMode(MovementSensorPin, INPUT);
+    pinMode(MovementSensorPin, INPUT);
 
-  lightControllers[0] = new LightController(11, 10, 9);
+    lightControllers[0] = new LightController(11, 10, 9);
 
-  lightControllers[0]->AddAnimationStep(new LightAnimationStep(CRGB::Blue, 1), millis());
+    // lightControllers[0]->AddAnimationStep(new LightAnimationStep(CRGB::Blue, 1), millis());
+    lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Blue, CRGB::Red, 500, true), millis());
+    lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Red, CRGB::Blue, 10000, true), millis());
 }

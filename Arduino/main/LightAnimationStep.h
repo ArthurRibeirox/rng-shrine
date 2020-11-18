@@ -6,19 +6,19 @@
 class LightAnimationStep {
 
 public:
-  LightAnimationStep(CRGB color, int stepDuration, bool stepShouldLoop = false);
+    LightAnimationStep(CRGB _startColor, int stepDuration, bool stepShouldLoop = false);
 
-  virtual void Start(long millis);
-  virtual CRGB GetCurrentColor(long millis);
-  bool ShouldFinish(long millis);
-  void Finish();
+    virtual void Start(long millis);
+    virtual CRGB GetCurrentColor(long millis);
+    bool ShouldFinish(long millis);
+    void Finish();
+    
+    bool shouldLoop;
   
-  bool shouldLoop;
-  
-private:
-  int duration;
-  long startTime;
-  CRGB currentColor;
+protected:
+    int duration;
+    long startTime;
+    CRGB startColor;
 };
 
 #endif

@@ -1,22 +1,22 @@
 #include "LightAnimationStep.h"
 
-LightAnimationStep::LightAnimationStep(CRGB color, int stepDuration, bool stepShouldLoop)
+LightAnimationStep::LightAnimationStep(CRGB _startColor, int stepDuration, bool stepShouldLoop)
 {
-  currentColor = color;
-  duration = stepDuration;
-  shouldLoop = stepShouldLoop;
+    startColor = _startColor;
+    duration = stepDuration;
+    shouldLoop = stepShouldLoop;
 }
 
 void LightAnimationStep::Start(long millis)
 {
-  startTime = millis;
+    startTime = millis;
 }
 
-CRGB LightAnimationStep::GetCurrentColor(long millis) { return currentColor; }
+CRGB LightAnimationStep::GetCurrentColor(long millis) { return startColor; }
 
 bool LightAnimationStep::ShouldFinish(long millis)
 {
-  return (millis - startTime) >= duration;
+    return (millis - startTime) >= duration;
 }
 
 void LightAnimationStep::Finish() {}
