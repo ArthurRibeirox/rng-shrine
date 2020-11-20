@@ -6,20 +6,32 @@
 
 const int bluetoothRXPin = 2;
 const int bluetoothTXPin = 3;
+
+const int bodyRedPin = 11;
+const int bodyGreenPin = 10;
+const int bodyBluePin = 9;
+
 const int MovementSensorPin = 13;
 
-
-
-
 SoftwareSerial bluetooth(bluetoothRXPin, bluetoothTXPin);
+
 LightController* lightControllers[2];
 CommandParser* commandParser;
 
 void loop() {
-    commandParser->TryParseCommands();
+    commandParser->TryParseCommands(millis());
     lightControllers[0]->Update(millis());
+}
 
+void setup() {
+    Serial.begin(9600);
 
+    // pinMode(MovementSensorPin, INPUT);
+
+    lightControllers[0] = new LightController(bodyRedPin, bodyGreenPin, bodyBluePin);
+    
+    commandParser = new CommandParser(&bluetooth, lightControllers);
+}
 
 
 
@@ -39,19 +51,3 @@ void loop() {
 //  {
 //    SetLED(CRGB(0,0,0));
 //  }
-  
-}
-
-void setup() {
-    Serial.begin(9600);
-
-    // pinMode(MovementSensorPin, INPUT);
-
-    lightControllers[0] = new LightController(11, 10, 9);
-
-    // lightControllers[0]->AddAnimationStep(new LightAnimationStep(CRGB::Blue, 1), millis());
-    lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Blue, CRGB::Red, 500, true), millis());
-    lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Red, CRGB::Blue, 10000, true), millis());
-
-    commandParser = new CommandParser(&bluetooth, lightControllers);
-}

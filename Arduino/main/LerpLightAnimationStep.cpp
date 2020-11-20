@@ -4,16 +4,15 @@
 // TODO: Remove
 #include "Arduino.h"
 
-LerpLightAnimationStep::LerpLightAnimationStep(CRGB _startColor, CRGB _targetColor, int stepDuration, bool stepShouldLoop)
+LerpLightAnimationStep::LerpLightAnimationStep(CRGB& _startColor, CRGB& _targetColor, int stepDuration, bool stepShouldLoop = false)
     : LightAnimationStep(_startColor, stepDuration, stepShouldLoop)
 {
     targetColor = _targetColor;
 
-    // TODO: Remove
-    char buf [64];
-    sprintf (buf, "StartColor: %d, %d, %d\r\n", startColor.r, startColor.g, startColor.b);
-    Serial.print(buf);
-    sprintf (buf, "TargetColor: %d, %d, %d\r\n", targetColor.r, targetColor.g, targetColor.b);
+    // TODO: Create a proper Logger
+    Serial.println("LerpLightAnimationStep Constructor");
+    char buf [200];
+    sprintf(buf, "TargetColor: %d, %d, %d\r\n", _targetColor.r, _targetColor.g, _targetColor.b);
     Serial.print(buf);
 }
 

@@ -1,41 +1,50 @@
 #include "CommandParser.h"
+#include "LightAnimationStep.h"
+#include "LerpLightAnimationStep.h"
+#include "FastLED.h"
 
 CommandParser::CommandParser(SoftwareSerial *bluetoothSerial, LightController** controllers)
 {
     bluetooth = bluetoothSerial;
     bluetooth->begin(9600);
     bluetooth->print("$");
+    bluetooth->print("$");
+    bluetooth->print("$");
 
     lightControllers = controllers;
 }
 
-void CommandParser::TryParseCommands()
+void CommandParser::TryParseCommands(long millis)
 {
     if (bluetooth->available()) {
+        currentCommand = bluetooth->readStringUntil('\n');
+        Serial.println("Command read: " + currentCommand);
+
+        if (!FillCommandArguments())
+        {
+            return;
+        }
+
+        Serial.print("Arguments found: ");
+        for(int i = 0; i < commandArgumentsCount; i++)
+        {
+            Serial.print(String(commandArguments[i]) + " | ");
+        }
+        Serial.print("\n");
+
         int commandCode = ParseCommandCode();
         if (commandCode == -1) return;
-
-        if (!FlushSeparator()) return;
 
         LightController* targetLight = GetTargetLight();
         if (targetLight == nullptr) return;
 
-        int flushed = FlushSeparator();
-        if (flushed == 0) return;
-
-        commandArgumentsCount = 0;
-        if (flushed == 1)
-        {
-            FillCommandArguments();
-        }
-
-        ((CommandParser*)this->*(commands[commandCode]))(targetLight);
+        ((CommandParser*)this->*(commands[commandCode]))(targetLight, millis);
     }
 }
 
 int CommandParser::ParseCommandCode()
 {
-    int commandCode = bluetooth->parseInt();
+    int commandCode = commandArguments[0];
 
     if (commandCode <= 0 || commandCode > COMMANDS_COUNT)
     {
@@ -48,7 +57,7 @@ int CommandParser::ParseCommandCode()
 
 LightController* CommandParser::GetTargetLight()
 {
-    int lightIndex = bluetooth->parseInt();
+    int lightIndex = commandArguments[1];
 
     if (lightIndex <= 0 || lightIndex > LIGHTS_COUNT)
     {
@@ -56,68 +65,86 @@ LightController* CommandParser::GetTargetLight()
         return nullptr;
     }
 
-    return lightControllers[lightIndex];
+    return lightControllers[lightIndex-1];
 }
 
 bool CommandParser::FillCommandArguments()
 {
-    int flushed;
-    
-    for (int i = 0; i < MAX_COMMAND_ARGUMENTS; i++)
-    {
-        commandArguments[i] = bluetooth->parseInt();
-        
-        flushed = FlushSeparator();
-        if (flushed == 0) return false;
-        if (flushed == 2) return true;
-    }
+    int separatorCheck;
+    commandArgumentsCount = 0;
 
-    flushed = FlushSeparator();
-    if (flushed == 2) return true;
-    if (flushed == 1)
-        ReportBug("Command arguments exceeded max allowed.");
+    for (int i = 0; i < currentCommand.length(); i++)
+    {
+        if (commandArgumentsCount >= MAX_COMMAND_ARGUMENTS)
+        {
+            ReportBug("Command arguments exceeded max allowed.");
+            return false;
+        }
+
+        int numberStartIndex = i;
+        while(isdigit(currentCommand.charAt(i))) i++;
+
+        if (numberStartIndex == i)
+        {
+            ReportBug("Expected command argument!");
+            return;
+        }
+
+        String sub = currentCommand.substring(numberStartIndex, i);
+        int parsed = sub.toInt();
+
+        commandArguments[commandArgumentsCount] = currentCommand.substring(numberStartIndex, i).toInt();
+        commandArgumentsCount++;
+        
+        separatorCheck = CheckSeparator(currentCommand.charAt(i));
+        if (separatorCheck == 0) return false;
+        if (separatorCheck == 2) return true;
+    }
     
+    Serial.println("What the flying");
     return false;
 }
 
-void CommandParser::ClearLightAnimationStepsCommand(LightController* lightController)
+void CommandParser::ClearLightAnimationStepsCommand(LightController* lightController, long millis)
 {
+    lightController->ClearAnimationSteps();
 }
 
-void CommandParser::SetLightColorCommand(LightController* lightController)
+void CommandParser::SetLightColorCommand(LightController* lightController, long millis)
 {
-}
-
-void CommandParser::LerpLightColorCommand(LightController* lightController)
-{
-}
-
-// void SetRGBOperation()
-// {
-//   analogWrite(redPin, bluetooth->parseInt());
-//   FlushSeparator(',');
-//   analogWrite(greenPin, bluetooth->parseInt());
-//   FlushSeparator(',');
-//   analogWrite(bluePin, bluetooth->parseInt());
-//   FlushSeparator('\n');
-// }
-
-// void GetTargetLedStrip()
-// {
-//     // TODO
-//     bluetooth->parseInt(); // This should be the led id
-//     FlushSeparator('|');
-// }
-
-int CommandParser::FlushSeparator(char separator = ARGUMENT_SEPARATOR)
-{
-    int foundSeparator = bluetooth->read();
-
-    if (foundSeparator == COMMAND_SEPARATOR) return 2;
-
-    if (foundSeparator != separator)
+    if (commandArgumentsCount != 6)
     {
-        ReportBug("Wrong separator! Expected: " + String(separator) + ", got: " + String(foundSeparator));
+        ReportBug("Command arguments differ from command called: SetLightColorCommand");
+        return;
+    }
+
+    CRGB startColor = CRGB(commandArguments[2], commandArguments[3], commandArguments[4]);
+
+    lightController->AddAnimationStep(new LightAnimationStep(startColor, commandArguments[5]), millis);
+}
+
+void CommandParser::LerpLightColorCommand(LightController* lightController, long millis)
+{
+    if (commandArgumentsCount != 9 && commandArgumentsCount != 10)
+    {
+        ReportBug("Command arguments differ from command called: SetLightColorCommand");
+        return;
+    }
+
+    CRGB startColor = CRGB(commandArguments[2], commandArguments[3], commandArguments[4]);
+    CRGB targetColor = CRGB(commandArguments[5], commandArguments[6], commandArguments[7]);
+    bool loop = commandArgumentsCount == 10 ? commandArguments[9] : false;
+
+    lightController->AddAnimationStep(new LerpLightAnimationStep(startColor, targetColor, commandArguments[8], loop), millis);
+}
+
+int CommandParser::CheckSeparator(char commandChar)
+{
+    if (commandChar == COMMAND_SEPARATOR1 || commandChar == COMMAND_SEPARATOR2) return 2;
+
+    if (commandChar != ARGUMENT_SEPARATOR)
+    {
+        ReportBug("Expected command argument separator, got: `" + String(commandChar) + "` ");
         return 0;
     }
 
@@ -126,10 +153,8 @@ int CommandParser::FlushSeparator(char separator = ARGUMENT_SEPARATOR)
 
 void CommandParser::ReportBug(String message)
 {
-    bluetooth->println(
-        "[Error] " +
-        message +
-        ", Remaining command: " +
-        bluetooth->readStringUntil('\n')
-    );
+    String str = "[Error] " + message + ", command: " + currentCommand;
+
+    bluetooth->println(str);
+    Serial.println(str);
 }
