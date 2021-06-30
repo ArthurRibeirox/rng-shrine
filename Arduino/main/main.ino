@@ -31,6 +31,9 @@ void setup() {
     lightControllers[0] = new LightController(bodyRedPin, bodyGreenPin, bodyBluePin);
     
     commandParser = new CommandParser(&bluetooth, lightControllers);
+
+    // lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Blue, CRGB::Red, 500, true), millis());
+    lightControllers[0]->AddAnimationStep(new LerpLightAnimationStep(CRGB::Red, CRGB::Blue, 10000, true), millis());
 }
 
 

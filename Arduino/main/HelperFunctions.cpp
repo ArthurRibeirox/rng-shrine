@@ -1,6 +1,6 @@
 #include "HelperFunctions.h"
 
-float lerp(float a, float b, float x)
+int lerp(int a, int b, int x)
 {
     return a + x * (b - a);
 }

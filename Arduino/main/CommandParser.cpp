@@ -2,6 +2,7 @@
 #include "LightAnimationStep.h"
 #include "LerpLightAnimationStep.h"
 #include "FastLED.h"
+#include "Arduino.h"
 
 CommandParser::CommandParser(SoftwareSerial *bluetoothSerial, LightController** controllers)
 {
@@ -112,15 +113,26 @@ void CommandParser::ClearLightAnimationStepsCommand(LightController* lightContro
 
 void CommandParser::SetLightColorCommand(LightController* lightController, long millis)
 {
-    if (commandArgumentsCount != 6)
+    if (commandArgumentsCount != 6 && commandArgumentsCount != 7)
     {
         ReportBug("Command arguments differ from command called: SetLightColorCommand");
         return;
     }
 
     CRGB startColor = CRGB(commandArguments[2], commandArguments[3], commandArguments[4]);
+    bool loop = commandArgumentsCount == 7 ? commandArguments[6] : false;
 
-    lightController->AddAnimationStep(new LightAnimationStep(startColor, commandArguments[5]), millis);
+    Serial.println("SetLightColorCommand new LightAnimationStep");
+
+    LightAnimationStep* animationStep = new LightAnimationStep(startColor, commandArguments[5], loop);
+    
+    CRGB color = animationStep->GetCurrentColor(millis);
+
+    Serial.println("SetLightColorCommand GetCurrentColor: " + String(color.r) + ", " + String(color.g) + ", " + String(color.b));
+
+    Serial.println("SetLightColorCommand AddAnimationStep");
+
+    lightController->AddAnimationStep(animationStep, millis);
 }
 
 void CommandParser::LerpLightColorCommand(LightController* lightController, long millis)

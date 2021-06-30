@@ -6,7 +6,7 @@
 class LerpLightAnimationStep : public LightAnimationStep {
 
 public:
-    LerpLightAnimationStep(CRGB& _startColor, CRGB& _targetColor, int stepDuration, bool stepShouldLoop = false);
+    LerpLightAnimationStep(CRGB _startColor, CRGB _targetColor, int stepDuration, bool stepShouldLoop = false);
 
     virtual CRGB GetCurrentColor(long millis) override;
 

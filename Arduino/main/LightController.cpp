@@ -1,9 +1,41 @@
 #include "LightController.h"
 #include "LightAnimationStep.h"
 #include "Arduino.h"
+#include <cQueue.h>
 
-LightController::LightController(uint8_t rPin, uint8_t gPin, uint8_t bPin, int maxAnimationSteps)
+
+CRGB Test()
 {
+    return CRGB(100, 0, 100);
+}
+
+class Test2
+{
+public:
+    void Test3();
+
+    int num;
+};
+
+void Test2::Test3()
+{
+    Serial.println("Vai dar a porra do seu cu: " + String(num));
+}
+
+
+void Test4(Test2* ref)
+{
+    ref->Test3();
+}
+
+LightController::LightController(int rPin, int gPin, int bPin, int maxAnimationSteps = 30)
+{
+    Test2* ref = new Test2();
+    ref->num = 3;
+
+    Test4(ref);
+
+
     redPin = rPin;
     greenPin = gPin;
     bluePin = bPin;
@@ -12,7 +44,12 @@ LightController::LightController(uint8_t rPin, uint8_t gPin, uint8_t bPin, int m
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
 
-    SetLedRGB(CRGB::Black);
+    // SetLedRGB(CRGB::Black);
+
+    CRGB color = Test();
+    Serial.println("LightController Start: " + String(color.r) + ", " + String(color.g) + ", " + String(color.b));
+
+    SetLedRGB(color);
 
     q_init(&animationSteps, sizeof(LightAnimationStep*), maxAnimationSteps, FIFO, false);
 }
@@ -22,16 +59,30 @@ void LightController::AddAnimationStep(LightAnimationStep* newStep, long elapsed
     if (q_isFull(&animationSteps))
     {
         // TODO: Handle overflow
+        Serial.println("LightController queue full!");
         return;
     }
-
-    q_push(&animationSteps, &newStep);
-
-    if (q_getCount(&animationSteps) == 1)
+    
+    if (q_getCount(&animationSteps) == 0)
     {
+        Serial.println("Setting color during AddAnimationStep");
         newStep->Start(elapsedMillis);
-        SetLedRGB(newStep->GetCurrentColor(elapsedMillis));
+        CRGB color = newStep->GetCurrentColor(elapsedMillis);
+
+        Serial.println("Setting color to: " + String(color.r) + ", " + String(color.g) + ", " + String(color.b));
+
+        SetLedRGB(color);
     }
+    // Serial.println("Setting color during AddAnimationStep");
+    // newStep->Start(elapsedMillis);
+
+    // q_push(&animationSteps, &newStep);
+    fuckAll = newStep;
+    
+    Serial.println("Sq_push");
+    Serial.println("Sq_push");
+
+
 }
 
 void LightController::ClearAnimationSteps()
@@ -41,42 +92,45 @@ void LightController::ClearAnimationSteps()
 
 bool LightController::Update(long elapsedMillis)
 {
-    Serial.println("Update start");
-    if (q_isEmpty(&animationSteps))
-    {
-        return;
-    }
+    // Serial.println("Update start");
+    // if (q_isEmpty(&animationSteps))
+    // {
+    //     return;
+    // }
+    // LightAnimationStep* currentStep;
+    // q_peek(&animationSteps, &currentStep);
+    // currentStep->Finish();
     
-    LightAnimationStep* currentStep;
-    q_peek(&animationSteps, &currentStep);
+    fuckAll->Finish();
+    CRGB color = fuckAll->GetCurrentColor(elapsedMillis);
 
-    if (currentStep->ShouldFinish(elapsedMillis))
-    {
-        RemoveFirstAnimationStep(elapsedMillis);
+    // if (currentStep->ShouldFinish(elapsedMillis))
+    // {
+    //     RemoveFirstAnimationStep(elapsedMillis);
 
-        if (q_isEmpty(&animationSteps))
-        {
-            return;
-        }
+    //     if (q_isEmpty(&animationSteps))
+    //     {
+    //         return;
+    //     }
 
 
-        q_peek(&animationSteps, &currentStep);
-        currentStep->Start(elapsedMillis);
-    }
+    //     q_peek(&animationSteps, &currentStep);
+    //     currentStep->Start(elapsedMillis);
+    // }
     
-    CRGB color = currentStep->GetCurrentColor(elapsedMillis);
+    // CRGB color = currentStep->GetCurrentColor(elapsedMillis);
     
     // TODO: Remove
-    char buf [64];
-    sprintf (buf, "New Color: %d, %d, %d\r\n", color.r, color.g, color.b);
-    Serial.print(buf);
+    // char buf [64];
+    // sprintf (buf, "New Color: %d, %d, %d\r\n", color.r, color.g, color.b);
+    // Serial.print(buf);
 
     SetLedRGB(color);
 
-    Serial.println("Update end");
+    // Serial.println("Update end");
 }
 
-void LightController::SetLedRGB(CRGB color)
+void LightController::SetLedRGB(const CRGB& color)
 {
     analogWrite(redPin, color.r);
     analogWrite(greenPin, color.g);

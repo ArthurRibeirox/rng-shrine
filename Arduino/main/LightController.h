@@ -8,14 +8,16 @@
 class LightController {
 
 public:
-    LightController(uint8_t _rPin, uint8_t _gPin, uint8_t _bPin, int _maxAnimationSteps = 30);
+    LightController(int rPin, int gPin, int bPin, int maxAnimationSteps = 30);
 
     void AddAnimationStep(LightAnimationStep* newStep, long elapsedMillis);
     void ClearAnimationSteps();
     bool Update(long elapsedMillis);
 
+    LightAnimationStep* fuckAll;
+
 private:
-    void SetLedRGB(CRGB color);
+    void SetLedRGB(const CRGB& color);
     void RemoveFirstAnimationStep(long elapsedMillis);
 
     Queue_t animationSteps;
